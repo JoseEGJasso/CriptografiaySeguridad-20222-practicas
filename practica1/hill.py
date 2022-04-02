@@ -113,7 +113,8 @@ class Hill():
                         Si la matriz de la clave no es invertible
         """
         if not raiz in [2,3]:
-            raise ValueError("La clave no tiene una longitud valida")
+            raise ValueError(
+                "La clave no tiene una longitud valida (tiene que serde longitud 4 o 9)")
 
         # matriz de la clave
         k_arr = [0]*raiz
@@ -134,7 +135,7 @@ class Hill():
 
         # verificamos si es invertible sobre mod longitud del alfabeto
         if self.__mcd(det,len(self.abc)) != 1:
-            raise ValueError("No es posible invertir la matriz")
+            raise ValueError("No es posible invertir la matriz de la clave")
 
         return k_arr
 
@@ -203,5 +204,9 @@ class Hill():
 
 if __name__ == '__main__':
     h = Hill("ABCDEFGHIJKLMNÑOPQRSTUVWXYZ")
-    h.cifrar("LIMONESAS","QWERTYUIOPASDFGHJK")
+
+    try:
+        h.cifrar("LIMONESAS","QWERTYUIOPASDFGHJK")
+    except ValueError as e:
+        print(e)
     
