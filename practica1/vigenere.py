@@ -1,4 +1,10 @@
-""" Clase que implementa el cifrado y descifrado de Vigenere"""
+""" 
+    Autores:
+    - Jose Eduardo Gonzalez Jasso. 316093837
+    - Diego Dozal Magnani. 316032708
+    
+    Clase que implementa el cifrado y descifrado de Vigenere
+"""
 class Vigenere():
     def __init__(self,abc):
         self.abc = abc
