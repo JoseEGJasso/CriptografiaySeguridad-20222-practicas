@@ -3,7 +3,7 @@ import math
 """
     Autores:
     - Jose Eduardo Gonzalez Jasso. 316093837
-    - Diego Dozal Magnani. 
+    - Diego Dozal Magnani. 316032708
 
     Clase que implementa el cifrado y decifrado de Hill
     para matrices de 2x2 y 3x3
