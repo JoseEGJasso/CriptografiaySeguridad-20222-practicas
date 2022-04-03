@@ -38,6 +38,29 @@ class Hill():
         return b
 
 
+    def __euclides(self,a,b):
+        """
+        Funcion que realiza el algoritmo de euclides dados dos numeros
+        Esta version se basa en el pseudocodigo mostrado en:
+        https://es.wikipedia.org/wiki/Algoritmo_de_Euclides
+
+        input:
+            a: int. primer numero
+            b: int. segundo numero
+        output:
+            (mcd,s,t): tuple. tupla que contiene los coeficientes de la siguiente 
+                              combinacion lineal mcd(a,b) = sa + tb
+        """
+        a = abs(a)
+        b = abs(b)
+
+        if b == 0:
+            return (a,1,0)
+        else:
+            d,s,t = self.__euclides(b,a % b)
+            return (d,t,s - (a // b)*t)        
+
+
     def __mult_matrices(self, m_1, m_2):
         """ 
         Funcion que calcula el producto de dos matrices
@@ -98,13 +121,59 @@ class Hill():
                 f'Imposible calcular el determinante de una matriz de tamaño {len(m)}')
 
 
-    def __verifica_clave(self,raiz,clave):
+    def __inversa(self,m):
+        """
+        Funcion que calcula la inversa de una matriz de 2x2 o 3x3
+
+        input:
+            m: list of list. matriz a invertir
+        output:
+            l: list of list. matriz inversa de m
+
+        """
+        l = [0] * len(m)
+
+        for i in range(0,len(m)):
+            l[i] = [0]*len(m)
+
+        if len(m) == 2:
+            # intercambiamos la entrada 0,0 con la 1,1
+            l[0][0], l[1][1]= m[1][1],m[0][0]
+
+            # multiplicamos por -1 las entradas 0,1 y 1,0
+            l[0][1] *= -1
+            l[1][0] *= -1
+
+            return l
+
+        elif len(m) == 3:
+            cp_m = m.copy()
+            n = len(l)
+
+            b = 1
+
+            for i in range(0,n):
+                for j in range(0,n):
+                    p1 = cp_m[(j+1)%n][(i+1)%n] * cp_m[(j+2)%n][(i+2)%n]
+                    p2 = cp_m[(j+1)%n][(i+2)%n] * cp_m[(j+2)%n][(i+1)%n]
+
+                    l[i][j] =  p1 - p2
+                    5
+                    b += 1
+            
+            return l
+
+        else:
+            raise ValueError("Solo es posible calcular la inversa de una matriz 2x2 o 3x3")
+
+
+
+    def __verifica_clave(self,clave):
         """
         Funcion que verifica que la clave sea valida para el
         cifrado de Hill y genera su forma de matriz
 
         input:
-            raiz: int. longitud de cada fila de la matriz clave
             clave: string. clave de cifrado
         output:
             k_arr: list of list. matriz de la clave de cifrado
@@ -112,9 +181,11 @@ class Hill():
             ValueError. Si la clave no es de longitud 4 o 9
                         Si la matriz de la clave no es invertible
         """
+        raiz = int(math.sqrt(len(clave)))
+
         if not raiz in [2,3]:
             raise ValueError(
-                "La clave no tiene una longitud valida (tiene que serde longitud 4 o 9)")
+                "La clave no tiene una longitud valida (tiene que ser de longitud 4 o 9)")
 
         # matriz de la clave
         k_arr = [0]*raiz
@@ -159,10 +230,10 @@ class Hill():
             raise ValueError(
                 "La longitud del texto no es multiplo de la longitud de la clave")
 
+        c_matriz = self.__verifica_clave(clave)
         r = math.sqrt(len(clave))
-        c_matriz = self.__verifica_clave(int(r),clave)
 
-        # calculamos la letra correspondiente de cada par (texto.char,clave.char)
+        # calculamos el indice correspondiente de cada caracter del texto
         vectores = []
         v = []
         s = 0
@@ -186,7 +257,7 @@ class Hill():
 
         # vectores modulo longitud del alfabeto
         for vector in v_cripto:
-            cifrado.append([int(i[0] % len(self.abc)) for i in vector])
+            cifrado.append([int(k[0] % len(self.abc)) for k in vector])
 
         criptotexto = ""
 
@@ -198,15 +269,79 @@ class Hill():
         return criptotexto
 
 
-    def descifrar(clave,cripg):
-        pass
+    def descifrar(self,clave,criptograma):
+        """
+        Funcion que descifra un criptograma dada una clave
+        utilizando el criptosistema de Hill
+
+        input:
+            clave: string. clave para descifrar
+            criptograma: string. texto cifrado
+        output:
+            txt_claro. string
+        """
+        d_matriz = self.__verifica_clave(clave)
+        inv = self.__inversa(d_matriz)
+
+        r = int(math.sqrt(len(clave)))
+
+        # calculamos el indice correspondiente de cada letra del criptograma
+        vectores = []
+        v = []
+        s = 0
+        for i in range(0,len(criptograma)):
+            if s == r :
+                vectores.append(v)
+                s = 0
+                v = []
+
+            i_char = self.abc.index(criptograma[i])
+            v.append([i_char])
+            s += 1
+
+            if i == len(criptograma) - 1:
+                vectores.append(v)
+
+        # calculamos el inverso del determinante
+        det = round(self.__det(d_matriz)) % len(self.abc)
+        _,det_inv,_ = self.__euclides(det,len(self.abc))
+
+        if det_inv < 0:
+            det_inv += len(self.abc)
+
+        # calculamos la matriz inversa modulo longitud del abecedario de entrada
+        inv_mod = []
+
+        for fila in inv:
+            inv_mod.append([(k * det_inv) % len(self.abc) for k in fila])
+
+        # multiplicamos por la matriz de descifrado
+        descifrado = [self.__mult_matrices(inv_mod,v) for v in vectores]
+
+        # vectores modulo longitud del alfabeto de entrada
+        desc_mod = []
+
+        for vector in descifrado:
+            desc_mod.append([int(k[0] % len(self.abc)) for k in vector])
+
+        # obtenemos el caracter de cada valor de los vectores
+        txt_claro = ""
+
+        for vector in desc_mod:
+            for ch in [self.abc[k] for k in vector]:
+                txt_claro += ch
+
+        return txt_claro
 
 
 if __name__ == '__main__':
     h = Hill("ABCDEFGHIJKLMNÑOPQRSTUVWXYZ")
 
     try:
-        h.cifrar("LIMONESAS","QWERTYUIOPASDFGHJK")
+        c = h.cifrar("LIMONESAS","QWERTYUIOPASDFGHJK")
+        print("TEXTO CIFRADO: ",c)
+        d = h.descifrar("LIMONESAS",c)
+        print("TEXTO DESCIFRADO: ",d)
     except ValueError as e:
         print(e)
     
