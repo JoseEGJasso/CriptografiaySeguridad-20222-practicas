@@ -231,3 +231,10 @@ if __name__ == '__main__':
     n_2 = 31
     e_2 = ECIES(E_2,P_2,m_2,n_2,abc='-ABCDEFGHIJKLMNOPQRSTUVWXYZ')
     print("TEXTO DESCIFRADO:",e_2.descifrar(cipher_2))
+
+
+    # EJEMPLO 3
+    claro = "HOLAMUNDO"
+    c = e.cifrar(claro)
+    d = e.descifrar(c)
+    print(f'TEXTO DESCIFRADO: {str(d)}')
